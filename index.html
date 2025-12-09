@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>情緒轉念四子棋</title>
+    <!-- 引入 Tailwind CSS 進行快速排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定義動畫 */
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounce-in {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .animate-pop { animation: pop 0.2s ease-out forwards; }
+        .animate-bounce-in { animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        /* 防止雙擊縮放 */
+        body { touch-action: manipulation; }
+        
+        /* 移除預設的選取反白，讓體驗更像App */
+        .select-none { -webkit-user-select: none; user-select: none; }
+    </style>
+</head>
+<body class="bg-orange-50 font-sans text-gray-800 min-h-screen flex flex-col items-center select-none pb-10">
+
+    <!-- 標題區 -->
+    <header class="w-full max-w-4xl flex-shrink-0 p-2 sm:p-4">
+        <div class="bg-white p-3 rounded-2xl shadow-sm border-2 border-orange-100 flex flex-col md:flex-row items-center justify-between gap-3 relative">
+            
+            <!-- Logo 與 標題 -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="speak('情緒轉念四子棋，覺察情緒，練習轉念，讓心情放晴！')">
+                <div class="bg-orange-100 p-2 rounded-full hidden sm:block">
+                    <!-- Smile Icon SVG -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                </div>
+                <div class="text-center md:text-left">
+                    <h1 class="text-xl sm:text-2xl font-black text-gray-800 tracking-tight hover:text-orange-600 transition-colors">情緒轉念四子棋</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 hidden sm:block">規則：連成 4 顆就獲勝！</p>
+                </div>
+            </div>
+
+            <!-- 隊伍狀態與設定 -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-2xl">
+                    <!-- 橘子隊 -->
+                    <div id="team-orange" class="flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-orange-400">
+                        <div class="w-5 h-5 rounded-full bg-orange-500 border-2 border-white shadow-sm"></div>
+                        <span class="font-bold text-gray-700 text-sm">橘子</span>
+                    </div>
+                    <div class="text-gray-300 font-bold text-xs">VS</div>
+                    <!-- 檸檬隊 -->
+                    <div id="team-yellow" class="flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50">
+                        <div class="w-5 h-5 rounded-full bg-yellow-400 border-2 border-white shadow-sm"></div>
+                        <span class="font-bold text-gray-700 text-sm">檸檬</span>
+                    </div>
+                </div>
+
+                <!-- 設定按鈕 -->
+                <button onclick="toggleSettings()" class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all active:scale-95 shadow-sm border border-gray-200">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 勝利提示 (預設隱藏) -->
+    <div id="winner-banner" class="hidden mb-4 animate-bounce z-10 cursor-pointer" onclick="speakWinner()">
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-3 text-lg font-bold">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+            <span id="winner-text"></span>
+        </div>
+    </div>
+
+    <!-- 棋盤區 -->
+    <div class="w-full max-w-4xl bg-white p-2 sm:p-4 rounded-xl shadow-xl border-4 border-[#eecfa1] mb-4">
+        <div id="game-board" class="grid gap-1 bg-[#eecfa1] border-2 border-[#eecfa1] w-full mx-auto" style="grid-template-columns: repeat(8, minmax(auto, 1fr));">
+            <!-- 棋盤格子將由 JS 動態生成 -->
+        </div>
+    </div>
+
+    <!-- 底部按鈕 -->
+    <footer class="mt-2 shrink-0 max-w-2xl text-center pb-6">
+        <button onclick="resetGame()" class="flex items-center gap-2 mx-auto text-gray-500 hover:text-orange-600 font-medium transition-colors px-4 py-2 hover:bg-orange-100 rounded-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
+            重新開始遊戲
+        </button>
+    </footer>
+
+    <!-- ================= 彈出視窗：設定 ================= -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/40 hidden items-start justify-end z-[60] p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mt-16 p-6 border border-gray-100 animate-pop max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    遊戲設定
+                </h3>
+                <button onclick="toggleSettings()" class="p-1 rounded-full hover:bg-gray-100 text-gray-500"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </div>
+
+            <div id="settings-main-view">
+                <div class="space-y-6">
+                    <!-- 語音 -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-700 font-medium">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="icon-voice-status"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                            語音朗讀
+                        </div>
+                        <button onclick="toggleVoice()" id="btn-voice-toggle" class="w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out bg-indigo-500">
+                            <div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 translate-x-6"></div>
+                        </button>
+                    </div>
+                    <!-- 音效 -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-700 font-medium">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-500"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                            互動音效
+                        </div>
+                        <button onclick="toggleSfx()" id="btn-sfx-toggle" class="w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out bg-yellow-500">
+                            <div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 translate-x-6"></div>
+                        </button>
+                    </div>
+                    
+                    <hr class="border-gray-100" />
+                    
+                    <!-- 字體大小 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <label class="text-sm font-bold text-gray-600 flex items-center gap-2">棋盤字體大小</label>
+                            <span id="font-size-display" class="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">16px</span>
+                        </div>
+                        <input type="range" min="12" max="28" step="1" value="16" oninput="updateFontSize(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+
+                    <button onclick="showEditView()" class="w-full py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold rounded-xl border border-orange-200 flex items-center justify-center gap-2 transition-colors">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        自訂/編輯題庫內容
+                    </button>
+                </div>
+            </div>
+
+            <div id="settings-edit-view" class="hidden flex-col h-full animate-pop">
+                <div class="flex items-center gap-2 mb-2 text-orange-600 font-bold">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    編輯題庫內容
+                </div>
+                <p class="text-xs text-gray-500 mb-2">請輸入題目，每行一格，將依序填入 6x8 棋盤。</p>
+                <textarea id="questions-input" class="flex-1 w-full p-3 border border-gray-300 rounded-xl text-sm leading-relaxed focus:ring-2 focus:ring-orange-300 outline-none resize-none mb-2" style="min-height: 250px;"></textarea>
+                <div id="edit-msg" class="text-xs text-center mb-2 px-2 py-1 rounded hidden"></div>
+                <div class="flex gap-2">
+                    <button onclick="restoreDefaults()" class="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-bold flex items-center justify-center gap-1" title="恢復為預設模式"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>恢復預設</button>
+                    <button onclick="hideEditView()" class="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-bold">取消</button>
+                    <button onclick="saveQuestions()" class="flex-[2] py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-1 shadow-md"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>儲存變更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 彈出視窗：遊戲互動 (轉念卡) ================= -->
+    <div id="game-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 relative transform transition-all scale-100 overflow-hidden flex flex-col animate-pop">
+            <button onclick="closeGameModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+
+            <!-- 頂部問題顯示區 -->
+            <div class="mb-4 pt-2 shrink-0">
+                <h3 id="modal-title" class="text-gray-500 text-sm font-bold mb-2 flex items-center gap-2 cursor-pointer hover:text-orange-500 w-fit" onclick="speakCurrentQuestion()">
+                    <span id="modal-title-dot" class="w-2 h-2 rounded-full bg-orange-400"></span>
+                    <span id="modal-title-text">當這個念頭出現時...</span>
+                </h3>
+                <div id="modal-question-box" class="bg-orange-50 p-4 rounded-2xl border-2 border-orange-100 flex items-start gap-3">
+                    <div class="flex-1 text-center cursor-pointer hover:opacity-75 transition-opacity" onclick="speakCurrentQuestion()">
+                        <div id="modal-question-text" class="text-xl sm:text-2xl font-bold text-gray-800 leading-snug whitespace-pre-line break-words"></div>
+                    </div>
+                    <button onclick="speakCurrentQuestion()" class="shrink-0 p-2 bg-white text-orange-500 rounded-full shadow-sm border border-orange-100 hover:bg-orange-500 hover:text-white transition-all active:scale-95">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 內容區 (情緒選擇 / 轉念 / 自訂回答) -->
+            <div id="modal-content" class="flex-1 overflow-y-auto min-h-0">
+                <!-- 動態注入 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 邏輯 -->
+    <script>
+        // --- 1. 資料庫 ---
+        const DEFAULT_QUESTIONS = [
+            "我就爛", "太討厭了", "他一定是\n故意跟我作對", "我不想參與", "地震了", "我覺得\n不公平", "一定是\n他偷走的", "我輸了",
+            "太快了\n我跟不上", "老師說\n我功課亂寫", "他有什麼\n了不起", "我就是\n倒楣人", "上課好無聊", "我沒辦法", "都是我害的", "我一定會輸",
+            "我都不會寫", "你就是故意\n找我麻煩", "什麼都\n不可能改變", "我一定會\n被大家取笑", "所有人\n都比我好", "我的想法\n不被重視", "沒有\n開心的事", "同學\n一直在講話",
+            "爸媽不愛我", "下雨了\n不能到外面玩", "我不敢說", "為什麼\n都是我", "家人\n一直在罵我", "我不想\n去學校", "如果我沒考好\n就是很糟的人", "完蛋了\n我做錯事",
+            "被罵了", "沒有人\n喜歡我", "我都\n沒有進步", "我好醜", "我只有\n一個人", "一個人走在\n很暗的地方", "沒有人\n了解我", "我一直\n做錯事",
+            "老師討厭我", "我受傷了\n好痛", "為什麼\n我都沒有", "都是他的錯", "太慢了\n好久喔", "死定了\n我忘了帶東西", "我做不到", "我不想\n跟他玩"
+        ];
+
+        const REFRAMING_DB = {
+            "我就爛": "每個人都有擅長和不擅長的事，我不爛，我只是還在學習中。",
+            "太討厭了": "這件事確實讓人不舒服，但我可以試著深呼吸，不讓壞心情停留太久。",
+            "他一定是\n故意跟我作對": "也許他只是剛好心情不好，或者這只是個誤會，不一定是針對我。",
+            "我不想參與": "稍微休息一下沒關係，等我準備好了，隨時可以再加入。",
+            "地震了": "這真的很可怕，但我現在是安全的，只要聽從大人指揮保護自己就好。",
+            "我覺得\n不公平": "我有權利感到生氣，也許我可以試著溫和地說出我的感受。",
+            "一定是\n他偷走的": "在沒有證據前，先別急著下定論，以免誤會了別人。",
+            "我輸了": "輸了沒關係，享受遊戲的過程比結果更重要，下次再來！",
+            "太快了\n我跟不上": "每個人速度不同，我可以舉手請老師慢一點，或是課後再慢慢練習。",
+            "老師說\n我功課亂寫": "老師可能希望我更進步，我可以請教哪裡需要修改，慢慢改好。",
+            "他有什麼\n了不起": "每個人都有發光的時候，我也會有屬於我的時刻，不需要比較。",
+            "我就是\n倒楣人": "今天運氣不好，不代表明天也會這樣，壞運氣總會過去的。",
+            "上課好無聊": "試著找找看課本裡有沒有有趣的圖片？或者專注聽聽看有沒有新發現。",
+            "我沒辦法": "這真的很難，但我可以試著把它拆成小步驟，一步一步來做做看。",
+            "都是我害的": "發生錯誤不是世界末日，我已經盡力了，下次改進就好。",
+            "我一定會輸": "還沒開始怎麼知道呢？盡力去玩，結果就不重要了。",
+            "我都不會寫": "這題真的好難，這很正常，我可以問同學或老師。",
+            "你就是故意\n找我麻煩": "也許他只是想引起注意，如果我不理他，他可能就覺得沒趣了。",
+            "什麼都\n不可能改變": "事情總是在變化，也許轉機就在下一刻，先別灰心。",
+            "我一定會\n被大家取笑": "真正的朋友不會取笑我，大家可能只是覺得好玩，沒有惡意。",
+            "所有人\n都比我好": "不需要跟別人比，只要跟昨天的自己比，有一點進步就很棒了。",
+            "我的想法\n不被重視": "我可以試著用不同的方式表達，或者找願意聽我說的人分享。",
+            "沒有\n開心的事": "試著找一件今天發生的小好事？例如現在有好玩的遊戲可以玩。",
+            "同學\n一直在講話": "這確實很吵，我可以試著專注在老師身上，或者舉手跟老師反應。",
+            "爸媽不愛我": "爸媽可能是在忙或心情不好，責備是因為擔心，不代表不愛我。",
+            "下雨了\n不能到外面玩": "雖然不能出去，但在家也可以玩好玩的遊戲，或者讀本有趣的書。",
+            "我不敢說": "說出來需要勇氣，我可以先寫下來，或找信任的人偷偷練習。",
+            "為什麼\n都是我": "有時候事情就是這麼剛好，不是因為我不好，深呼吸放鬆一下。",
+            "家人\n一直在罵我": "他們可能太急了，等氣氛好一點時，我可以試著表達我的受傷。",
+            "我不想\n去學校": "學校有讓我害怕的事嗎？我可以跟信任的大人討論看看怎麼解決。",
+            "如果我沒考好\n就是很糟的人": "成績不代表我的一切，我還有很多優點，例如我很善良、很努力。",
+            "完蛋了\n我做錯事": "承認錯誤並道歉是很勇敢的，大家都會原諒誠實的人。",
+            "被罵了": "被罵心裡很難過，但這也是學習的機會，知道哪裡錯了改進就好。",
+            "沒有人\n喜歡我": "我喜歡我自己，而且一定有人默默關心我，只是我還沒發現。",
+            "我都\n沒有進步": "進步有時候很慢，像種子發芽一樣，只要我不放棄，就在前進中。",
+            "我好醜": "外表不是全部，心地善良和微笑讓我看起來更漂亮。",
+            "我只有\n一個人": "一個人也可以很自在，或者我可以試著主動去對別人微笑。",
+            "一個人走在\n很暗的地方": "這確實讓人害怕，我會提高警覺，趕快走到亮的地方或找大人陪。",
+            "沒有人\n了解我": "這感覺很寂寞，但我可以試著多分享一點我的想法，讓別人懂我。",
+            "我一直\n做錯事": "沒關係，失敗為成功之母，多練習幾次就會了。",
+            "老師討厭我": "老師可能只是對事不對人，我可以表現得更好讓老師改觀。",
+            "我受傷了\n好痛": "痛痛飛走！我會好起來的，我可以找人幫忙擦藥呼呼。",
+            "為什麼\n我都沒有": "擁有不一定快樂，知足常樂，我現在擁有的也很珍貴。",
+            "都是他的錯": "指責別人不能解決問題，我們可以一起想辦法把事情變好。",
+            "太慢了\n好久喔": "等待的時候，我可以觀察周圍有趣的東西，或者發呆休息一下。",
+            "死定了\n我忘了帶東西": "沒關係，誠實跟老師說，下次記得寫在聯絡簿提醒自己。",
+            "我做不到": "試著加上『還』字，我『還』做不到，但我會越來越厲害。",
+            "我不想\n跟他玩": "不想玩也沒關係，我可以找其他朋友，或者自己玩得很開心。"
+        };
+
+        const EMOTIONS = [
+            { label: "生氣/不平", color: "text-red-600 bg-red-50 border-red-200", icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>' },
+            { label: "難過/受傷", color: "text-blue-500 bg-blue-50 border-blue-200", icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 16s-1.5-2-4-2-4 2-4 2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>' },
+            { label: "害怕/擔憂", color: "text-purple-500 bg-purple-50 border-purple-200", icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' },
+            { label: "羞愧/丟臉", color: "text-pink-500 bg-pink-50 border-pink-200", icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>' },
+            { label: "無助/煩躁", color: "text-gray-500 bg-gray-50 border-gray-200", icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="15" x2="16" y2="15"></line><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>' },
+            { label: "忌妒/羨慕", color: "text-green-600 bg-green-50 border-green-200", icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>' },
+        ];
+
+        // --- 2. 全域變數 ---
+        let state = {
+            board: Array(6).fill(null).map(() => Array(8).fill(null)),
+            currentPlayer: 'orange',
+            winner: null,
+            questions: [...DEFAULT_QUESTIONS],
+            settings: {
+                voiceEnabled: true,
+                sfxEnabled: true,
+                rate: 1,
+                fontSize: 16
+            },
+            modal: {
+                isOpen: false,
+                cell: null, // {r, c, text}
+                step: 0,
+                selectedEmotion: null,
+                showReframingHint: false
+            }
+        };
+
+        // --- 3. 音效合成器 (補上遺失的定義) ---
+        const playSynthSound = (type) => {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            const now = ctx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'pop') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'place') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'win') {
+                const playNote = (freq, time, dur) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.connect(g);
+                    g.connect(ctx.destination);
+                    o.type = 'square';
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.1, time);
+                    g.gain.exponentialRampToValueAtTime(0.01, time + dur);
+                    o.start(time);
+                    o.stop(time + dur);
+                };
+                playNote(523.25, now, 0.2);
+                playNote(659.25, now + 0.15, 0.2);
+                playNote(783.99, now + 0.3, 0.4);
+            }
+        };
+
+        // --- 4. 核心邏輯 ---
+
+        function isCustomMode() {
+            // 簡單比對陣列內容
+            return JSON.stringify(state.questions) !== JSON.stringify(DEFAULT_QUESTIONS);
+        }
+
+        function getBoardContent(r, c) {
+            let index = (r * 8 + c) % state.questions.length;
+            // 處理空題庫的邊緣情況
+            if (state.questions.length === 0) return "";
+            return state.questions[index] || "";
+        }
+
+        function initGame() {
+            renderBoard();
+            updateUI();
+        }
+
+        function resetGame() {
+            state.board = Array(6).fill(null).map(() => Array(8).fill(null));
+            state.currentPlayer = 'orange';
+            state.winner = null;
+            closeGameModal();
+            playSound('pop');
+            speak('遊戲重新開始');
+            initGame();
+        }
+
+        function checkWin(r, c, player) {
+            const directions = [
+                [[0, 1], [0, -1]], // 橫向
+                [[1, 0], [-1, 0]], // 縱向
+                [[1, 1], [-1, -1]], // 右下左上
+                [[1, -1], [-1, 1]]  // 左下右上
+            ];
+
+            for (let axis of directions) {
+                let count = 1;
+                for (let dir of axis) {
+                    let nr = r + dir[0];
+                    let nc = c + dir[1];
+                    while (nr >= 0 && nr < 6 && nc >= 0 && nc < 8 && state.board[nr][nc] === player) {
+                        count++;
+                        nr += dir[0];
+                        nc += dir[1];
+                    }
+                }
+                if (count >= 4) return true; // 四子棋規則
+            }
+            return false;
+        }
+
+        // --- 5. 互動處理 ---
+
+        function handleCellClick(r, c) {
+            if (state.board[r][c] || state.winner) return;
+
+            const text = getBoardContent(r, c);
+            state.modal = {
+                isOpen: true,
+                cell: { r, c, text },
+                step: 0,
+                selectedEmotion: null,
+                showReframingHint: false
+            };
+
+            playSound('click');
+            renderModal();
+            
+            // 延遲播放開窗音效
+            setTimeout(() => playSound('pop'), 50);
+
+            // 報讀邏輯：僅在非自訂模式下自動報讀
+            setTimeout(() => {
+                if (state.modal.isOpen) {
+                    if (!isCustomMode()) {
+                        speak(text);
+                    }
+                    // 自訂模式不自動報讀
+                }
+            }, 400);
+        }
+
+        // 當點擊格子內的文字時
+        function handleTextClick(e, r, c) {
+            e.stopPropagation(); // 阻止冒泡
+            const text = getBoardContent(r, c);
+            
+            // 如果格子已經有棋子，或者是遊戲結束狀態 -> 僅報讀
+            if (state.board[r][c] || state.winner) {
+                speak(text);
+            } else {
+                // 如果格子是空的 -> 視為點擊格子，觸發遊戲流程
+                handleCellClick(r, c);
+            }
+        }
+
+        function confirmMove() {
+            if (!state.modal.cell) return;
+            const { r, c } = state.modal.cell;
+
+            state.board[r][c] = state.currentPlayer;
+            playSound('place');
+
+            if (checkWin(r, c, state.currentPlayer)) {
+                state.winner = state.currentPlayer;
+                playSound('win');
+                speak(`恭喜！${state.currentPlayer === 'orange' ? '橘子隊' : '檸檬隊'}獲勝！`);
+            } else {
+                state.currentPlayer = state.currentPlayer === 'orange' ? 'yellow' : 'orange';
+                speak(`輪到${state.currentPlayer === 'orange' ? '橘子' : '檸檬'}隊`);
+            }
+
+            closeGameModal();
+            renderBoard();
+            updateUI();
+        }
+
+        // --- 6. 視窗與渲染 ---
+
+        function renderBoard() {
+            const boardEl = document.getElementById('game-board');
+            boardEl.innerHTML = '';
+            
+            for (let r = 0; r < 6; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const cellVal = state.board[r][c];
+                    const text = getBoardContent(r, c);
+                    
+                    const cellEl = document.createElement('div');
+                    // 響應式格寬
+                    cellEl.className = `relative w-full aspect-square bg-white flex items-center justify-center p-1 cursor-pointer transition-all duration-200 border border-gray-100 ${!cellVal && !state.winner ? 'hover:bg-orange-50' : ''}`;
+                    cellEl.onclick = () => handleCellClick(r, c);
+
+                    // 文字層
+                    const textEl = document.createElement('div');
+                    textEl.className = `w-full h-full flex items-center justify-center overflow-hidden z-10`; 
+                    // 這裡 onclick 改用 handleTextClick 處理
+                    textEl.onclick = (e) => handleTextClick(e, r, c); 
+                    
+                    const span = document.createElement('span');
+                    span.className = `text-center font-medium leading-tight text-gray-700 rounded-lg w-full break-words ${cellVal ? 'opacity-20' : ''}`;
+                    span.style.fontSize = `${state.settings.fontSize}px`;
+                    span.innerText = text;
+                    textEl.appendChild(span);
+                    cellEl.appendChild(textEl);
+
+                    // 棋子層 (Z-index 高於文字)
+                    if (cellVal) {
+                        const pieceEl = document.createElement('div');
+                        pieceEl.className = "absolute inset-0 flex items-center justify-center z-20 animate-bounce-in pointer-events-none";
+                        const colorClass = cellVal === 'orange' ? 'bg-orange-500' : 'bg-yellow-400';
+                        pieceEl.innerHTML = `
+                            <div class="w-3/4 h-3/4 rounded-full shadow-lg border-4 border-white flex items-center justify-center ${colorClass}">
+                                <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-90"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                            </div>
+                        `;
+                        cellEl.appendChild(pieceEl);
+                    } else if (!state.winner) {
+                        // Hover 效果 (Z-index 0)
+                        const hoverEl = document.createElement('div');
+                        hoverEl.className = `absolute inset-0 m-auto w-4 h-4 rounded-full opacity-0 hover:opacity-100 transition-opacity z-0 ${state.currentPlayer === 'orange' ? 'bg-orange-200' : 'bg-yellow-200'}`;
+                        cellEl.appendChild(hoverEl);
+                    }
+
+                    boardEl.appendChild(cellEl);
+                }
+            }
+        }
+
+        function updateUI() {
+            // 更新隊伍指示
+            const orangeTeam = document.getElementById('team-orange');
+            const yellowTeam = document.getElementById('team-yellow');
+            if (state.currentPlayer === 'orange') {
+                orangeTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-orange-400";
+                yellowTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50";
+            } else {
+                orangeTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50";
+                yellowTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-yellow-400";
+            }
+
+            // 更新勝利者
+            const winnerBanner = document.getElementById('winner-banner');
+            if (state.winner) {
+                winnerBanner.classList.remove('hidden');
+                document.getElementById('winner-text').innerText = `恭喜！${state.winner === 'orange' ? '橘子隊' : '檸檬隊'} 獲勝！`;
+            } else {
+                winnerBanner.classList.add('hidden');
+            }
+        }
+
+        function renderModal() {
+            const modal = document.getElementById('game-modal');
+            const content = document.getElementById('modal-content');
+            const titleDot = document.getElementById('modal-title-dot');
+            const titleText = document.getElementById('modal-title-text');
+            const questionBox = document.getElementById('modal-question-box');
+            
+            // 設定標題樣式
+            if (isCustomMode()) {
+                titleDot.className = "w-2 h-2 rounded-full bg-blue-400";
+                titleText.innerText = "請回答：";
+                questionBox.className = "bg-blue-50 p-4 rounded-2xl border-2 border-blue-100 flex items-start gap-3";
+                document.getElementById('modal-question-text').innerText = state.modal.cell.text;
+                
+                // 自訂模式：直接顯示確認按鈕
+                const btnColor = state.currentPlayer === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-400 hover:bg-yellow-500 text-yellow-900';
+                content.innerHTML = `
+                    <div class="flex flex-col h-full justify-center">
+                        <button onclick="confirmMove()" class="w-full font-bold py-4 rounded-xl text-white shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 text-lg ${btnColor}">
+                            <span>我回答好了！放置棋子</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                        </button>
+                    </div>
+                `;
+            } else {
+                // 預設模式：情緒覺察流程
+                titleDot.className = "w-2 h-2 rounded-full bg-orange-400";
+                titleText.innerText = "當這個念頭出現時...";
+                questionBox.className = "bg-orange-50 p-4 rounded-2xl border-2 border-orange-100 flex items-start gap-3";
+                document.getElementById('modal-question-text').innerText = state.modal.cell.text;
+
+                if (state.modal.step === 0) {
+                    // 步驟 1: 選情緒
+                    let emotionsHtml = EMOTIONS.map((emo, idx) => `
+                        <button onclick="selectEmotion('${emo.label}')" class="relative group flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all duration-200 ${state.modal.selectedEmotion === emo.label ? 'ring-2 ring-offset-2 ring-indigo-500 bg-white shadow-md ' + emo.color : 'hover:bg-gray-50 border-transparent bg-gray-50 text-gray-400'}">
+                            <div class="mb-1 transition-transform group-hover:scale-110 ${state.modal.selectedEmotion === emo.label ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}">${emo.icon}</div>
+                            <span class="text-xs font-bold ${state.modal.selectedEmotion === emo.label ? 'text-gray-800' : ''}">${emo.label}</span>
+                        </button>
+                    `).join('');
+
+                    content.innerHTML = `
+                        <div class="space-y-4 animate-pop">
+                            <div class="text-center cursor-pointer" onclick="speak('如果是你，會有什麼感覺？點選一個最符合的心情')">
+                                <h4 class="text-lg font-bold text-gray-800 hover:text-indigo-600 transition-colors">如果是你，會有什麼感覺？</h4>
+                                <p class="text-xs text-gray-500">點選一個最符合的心情</p>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">${emotionsHtml}</div>
+                            <button ${!state.modal.selectedEmotion ? 'disabled' : ''} onclick="nextStep()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-98 mt-2">
+                                選好了，下一步
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // 步驟 2: 轉念
+                    const btnColor = state.currentPlayer === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-400 hover:bg-yellow-500 text-yellow-900';
+                    const suggestion = getReframingSuggestion(state.modal.cell.text);
+                    
+                    let hintHtml = !state.modal.showReframingHint ? `
+                        <button onclick="showHint()" class="absolute inset-0 w-full h-full border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-green-50 hover:border-green-300 hover:text-green-700 text-gray-500 transition-all group">
+                            <div class="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-400"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path></svg></div>
+                            <span class="font-bold">我看不到轉念好方法，請幫幫我！</span>
+                            <span class="text-xs opacity-70">(點擊顯示建議)</span>
+                        </button>
+                    ` : `
+                        <div onclick="speak('轉念小幫手說：${suggestion}')" class="w-full h-full bg-green-50 p-4 rounded-xl border-2 border-green-200 flex flex-col items-center justify-center animate-pop cursor-pointer hover:bg-green-100 transition-colors">
+                            <div class="flex items-center gap-2 text-green-700 font-bold mb-2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path></svg>
+                                轉念小幫手說：
+                            </div>
+                            <p class="text-green-900 text-center font-bold text-lg leading-relaxed">「${suggestion}」</p>
+                        </div>
+                    `;
+
+                    content.innerHTML = `
+                        <div class="space-y-4 animate-pop">
+                            <div class="text-center cursor-pointer" onclick="speak('換你說說看！面對這種感覺，你可以怎麼安慰自己？請先試著說出來，再看小幫手的建議。')">
+                                <h4 class="text-lg font-bold text-gray-800 hover:text-indigo-600 transition-colors">換你說說看！</h4>
+                                <p class="text-sm text-gray-500 mt-1 px-4 leading-relaxed">面對這種感覺，你可以怎麼安慰自己？<br/>請先試著說出來，再看小幫手的建議。</p>
+                            </div>
+                            <div class="relative min-h-[140px]">${hintHtml}</div>
+                            <button onclick="confirmMove()" class="w-full font-bold py-3.5 rounded-xl text-white shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 ${btnColor}">
+                                <span>我說完了！放置棋子</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 輔助函式：視窗操作
+        function selectEmotion(label) {
+            state.modal.selectedEmotion = label;
+            speak(label.replace('/', '或'));
+            renderModal();
+        }
+
+        function nextStep() {
+            state.modal.step = 1;
+            playSound('pop');
+            speak("換你說說看！面對這種感覺，你可以怎麼安慰自己？");
+            renderModal();
+        }
+
+        function showHint() {
+            state.modal.showReframingHint = true;
+            playSound('pop');
+            const suggestion = getReframingSuggestion(state.modal.cell.text);
+            speak("轉念小幫手建議：" + suggestion);
+            renderModal();
+        }
+
+        function closeGameModal() {
+            document.getElementById('game-modal').classList.add('hidden');
+            document.getElementById('game-modal').classList.remove('flex');
+            state.modal.isOpen = false;
+            window.speechSynthesis.cancel();
+        }
+
+        function speakCurrentQuestion() {
+            if (isCustomMode()) {
+                speak("請回答：" + state.modal.cell.text);
+            } else {
+                speak(state.modal.cell.text);
+            }
+        }
+
+        // --- 7. 聲音與TTS ---
+        
+        function playSound(type) {
+            if (!state.settings.sfxEnabled) return;
+            playSynthSound(type);
+        }
+
+        function speak(text) {
+            if (!state.settings.voiceEnabled) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = state.settings.rate;
+            utterance.lang = "zh-TW"; 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakWinner() {
+            speak(`恭喜！${state.winner === 'orange' ? '橘子隊' : '檸檬隊'}獲勝！`);
+        }
+
+        // --- 8. 設定與編輯 ---
+
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                hideEditView(); // 預設顯示主選單
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function toggleVoice() {
+            state.settings.voiceEnabled = !state.settings.voiceEnabled;
+            const btn = document.getElementById('btn-voice-toggle');
+            const icon = document.getElementById('icon-voice-status');
+            const dot = btn.firstElementChild;
+            
+            if (state.settings.voiceEnabled) {
+                btn.className = "w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out bg-indigo-500";
+                dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 translate-x-6";
+                icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>';
+                icon.classList.remove('text-gray-400');
+            } else {
+                btn.className = "w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out bg-gray-300";
+                dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 translate-x-0";
+                icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+                icon.classList.add('text-gray-400');
+            }
+        }
+
+        function toggleSfx() {
+            state.settings.sfxEnabled = !state.settings.sfxEnabled;
+            const btn = document.getElementById('btn-sfx-toggle');
+            const dot = btn.firstElementChild;
+            
+            if (state.settings.sfxEnabled) {
+                btn.className = "w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out bg-yellow-500";
+                dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 translate-x-6";
+            } else {
+                btn.className = "w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out bg-gray-300";
+                dot.className = "bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 translate-x-0";
+            }
+        }
+
+        function updateFontSize(val) {
+            state.settings.fontSize = parseInt(val);
+            document.getElementById('font-size-display').innerText = val + 'px';
+            renderBoard();
+        }
+
+        function showEditView() {
+            document.getElementById('settings-main-view').classList.add('hidden');
+            const editView = document.getElementById('settings-edit-view');
+            editView.classList.remove('hidden');
+            editView.classList.add('flex');
+            
+            // 將內容轉為字串並移除內部換行，方便編輯
+            document.getElementById('questions-input').value = state.questions.map(q => q.replace(/\n/g, ' ')).join('\n');
+            document.getElementById('edit-msg').classList.add('hidden');
+        }
+
+        function hideEditView() {
+            document.getElementById('settings-main-view').classList.remove('hidden');
+            document.getElementById('settings-edit-view').classList.add('hidden');
+            document.getElementById('settings-edit-view').classList.remove('flex');
+        }
+
+        function restoreDefaults() {
+            state.questions = [...DEFAULT_QUESTIONS];
+            resetGame(); // 這會觸發重新渲染
+            
+            const msg = document.getElementById('edit-msg');
+            msg.innerText = "已恢復為預設情緒轉念模式";
+            msg.className = "text-xs text-center mb-2 px-2 py-1 rounded text-green-600 bg-green-50";
+            msg.classList.remove('hidden');
+            playSound('win');
+            
+            setTimeout(() => {
+                toggleSettings(); // 關閉設定視窗
+            }, 1000);
+        }
+
+        function saveQuestions() {
+            const input = document.getElementById('questions-input').value;
+            const newQuestions = input.split('\n').map(q => q.trim()).filter(q => q !== "");
+            const msg = document.getElementById('edit-msg');
+
+            if (newQuestions.length === 0) {
+                msg.innerText = "題庫不能為空！請輸入內容";
+                msg.className = "text-xs text-center mb-2 px-2 py-1 rounded text-red-600 bg-red-50";
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            // 檢查是否與預設相同
+            const normalizedDefault = DEFAULT_QUESTIONS.map(q => q.replace(/\n/g, ' ')).join('|');
+            const normalizedNew = newQuestions.join('|');
+
+            if (normalizedDefault === normalizedNew) {
+                state.questions = [...DEFAULT_QUESTIONS];
+                speak("內容與預設相同，已切換回完整教育流程");
+            } else {
+                state.questions = newQuestions;
+                speak("自訂題目更新成功");
+            }
+
+            resetGame(); // 重置並套用
+            playSound('win');
+            toggleSettings();
+        }
+
+        // --- 9. 智慧轉念邏輯 ---
+        function getReframingSuggestion(text) {
+            if (REFRAMING_DB[text]) return REFRAMING_DB[text];
+            
+            if (text.includes("輸")) return "輸贏是常態，重要的是我有沒有在過程中學到東西。";
+            if (text.includes("不會") || text.includes("不懂")) return "現在不會不代表永遠不會，我可以慢慢學，或者找人幫忙。";
+            if (text.includes("討厭") || text.includes("不喜歡")) return "我不需討好所有人，只要做自己覺得對的事就好。";
+            if (text.includes("錯")) return "犯錯是學習最好的機會，下次我會做得更好。";
+            if (text.includes("難") || text.includes("做不到")) return "這件事可能有挑戰，但我可以把它拆成小步驟試試看。";
+            if (text.includes("氣") || text.includes("怒")) return "生氣是正常的，深呼吸幾次，等心情平靜再處理。";
+
+            const suggestions = [
+                "這只是一個想法，不一定是事實。",
+                "即使發生了，我也可以想辦法解決。",
+                "這並不代表我整個人很糟。",
+                "深呼吸，我可以換個角度看。",
+                "我有能力面對這個挑戰。",
+                "這只是暫時的感覺，會過去的。"
+            ];
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) hash = text.charCodeAt(i) + ((hash << 5) - hash);
+            const index = Math.abs(hash) % suggestions.length;
+            return suggestions[index];
+        }
+
+        // 初始化
+        initGame();
+
+    </script>
+</body>
+</html>
