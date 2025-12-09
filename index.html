@@ -23,7 +23,7 @@
         /* 防止雙擊縮放 */
         body { touch-action: manipulation; }
         
-        /* 移除預設的選取反白，讓體驗更像App */
+        /* 移除預設的選取反白 */
         .select-none { -webkit-user-select: none; user-select: none; }
     </style>
 </head>
@@ -33,10 +33,10 @@
     <header class="w-full max-w-4xl flex-shrink-0 p-2 sm:p-4">
         <div class="bg-white p-3 rounded-2xl shadow-sm border-2 border-orange-100 flex flex-col md:flex-row items-center justify-between gap-3 relative">
             
-            <!-- Logo 與 標題 -->
-            <div class="flex items-center gap-3 cursor-pointer" onclick="speak('情緒轉念四子棋，覺察情緒，練習轉念，讓心情放晴！')">
+            <!-- Logo 與 標題 (手動點擊，強制發音) -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="speak('情緒轉念四子棋，覺察情緒，練習轉念，讓心情放晴！', false)">
                 <div class="bg-orange-100 p-2 rounded-full hidden sm:block">
-                    <!-- Smile Icon SVG -->
+                    <!-- Smile Icon -->
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
                 </div>
                 <div class="text-center md:text-left">
@@ -69,7 +69,7 @@
         </div>
     </header>
 
-    <!-- 勝利提示 (預設隱藏) -->
+    <!-- 勝利提示 -->
     <div id="winner-banner" class="hidden mb-4 animate-bounce z-10 cursor-pointer" onclick="speakWinner()">
         <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-3 text-lg font-bold">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
@@ -80,7 +80,7 @@
     <!-- 棋盤區 -->
     <div class="w-full max-w-4xl bg-white p-2 sm:p-4 rounded-xl shadow-xl border-4 border-[#eecfa1] mb-4">
         <div id="game-board" class="grid gap-1 bg-[#eecfa1] border-2 border-[#eecfa1] w-full mx-auto" style="grid-template-columns: repeat(8, minmax(auto, 1fr));">
-            <!-- 棋盤格子將由 JS 動態生成 -->
+            <!-- 棋盤格子由 JS 生成 -->
         </div>
     </div>
 
@@ -105,16 +105,38 @@
 
             <div id="settings-main-view">
                 <div class="space-y-6">
-                    <!-- 語音 -->
+                    <!-- 自動報讀 -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 text-gray-700 font-medium">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="icon-voice-status"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-                            語音朗讀
+                            自動報讀 (Auto)
                         </div>
                         <button onclick="toggleVoice()" id="btn-voice-toggle" class="w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out bg-indigo-500">
                             <div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 translate-x-6"></div>
                         </button>
                     </div>
+
+                    <!-- 語音風格選擇 -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-gray-600 block">朗讀聲音風格</label>
+                        <select id="voice-select" onchange="updateVoice(this.value)" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-orange-200 outline-none">
+                            <option value="">載入中...</option>
+                        </select>
+                    </div>
+
+                    <!-- 語速調整 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <label class="text-sm font-bold text-gray-600">朗讀速度</label>
+                            <span id="rate-display" class="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">1.0x</span>
+                        </div>
+                        <input type="range" min="0.5" max="2.0" step="0.1" value="1" oninput="updateRate(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span>慢</span>
+                            <span>快</span>
+                        </div>
+                    </div>
+
                     <!-- 音效 -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 text-gray-700 font-medium">
@@ -178,13 +200,14 @@
                     <div class="flex-1 text-center cursor-pointer hover:opacity-75 transition-opacity" onclick="speakCurrentQuestion()">
                         <div id="modal-question-text" class="text-xl sm:text-2xl font-bold text-gray-800 leading-snug whitespace-pre-line break-words"></div>
                     </div>
+                    <!-- 喇叭按鈕：手動觸發，所以 isAuto = false -->
                     <button onclick="speakCurrentQuestion()" class="shrink-0 p-2 bg-white text-orange-500 rounded-full shadow-sm border border-orange-100 hover:bg-orange-500 hover:text-white transition-all active:scale-95">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
                     </button>
                 </div>
             </div>
 
-            <!-- 內容區 (情緒選擇 / 轉念 / 自訂回答) -->
+            <!-- 內容區 -->
             <div id="modal-content" class="flex-1 overflow-y-auto min-h-0">
                 <!-- 動態注入 -->
             </div>
@@ -270,11 +293,13 @@
             winner: null,
             questions: [...DEFAULT_QUESTIONS],
             settings: {
-                voiceEnabled: true,
+                voiceEnabled: true, // 控制「自動」報讀
                 sfxEnabled: true,
-                rate: 1,
-                fontSize: 16
+                rate: 1, // 語速
+                fontSize: 16,
+                voiceURI: '' // 選擇的語音
             },
+            voices: [], // 儲存載入的語音列表
             modal: {
                 isOpen: false,
                 cell: null, // {r, c, text}
@@ -284,7 +309,7 @@
             }
         };
 
-        // --- 3. 音效合成器 (補上遺失的定義) ---
+        // --- 3. 音效合成器 ---
         const playSynthSound = (type) => {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
@@ -355,9 +380,38 @@
         }
 
         function initGame() {
+            loadVoices();
             renderBoard();
             updateUI();
         }
+
+        // 載入語音列表
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            // 排序：中文優先
+            state.voices = voices.sort((a, b) => {
+                const aZh = a.lang.includes('zh') || a.lang.includes('TW') || a.lang.includes('CN');
+                const bZh = b.lang.includes('zh') || b.lang.includes('TW') || b.lang.includes('CN');
+                if (aZh && !bZh) return -1;
+                if (!aZh && bZh) return 1;
+                return 0;
+            });
+            
+            // 填充下拉選單
+            const select = document.getElementById('voice-select');
+            if(select) {
+                select.innerHTML = state.voices.map(v => `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`).join('');
+                // 若尚未設定，預設選第一個
+                if (!state.settings.voiceURI && state.voices.length > 0) {
+                     const defaultVoice = state.voices.find(v => v.lang.includes('zh-TW')) || state.voices[0];
+                     state.settings.voiceURI = defaultVoice.voiceURI;
+                }
+                select.value = state.settings.voiceURI;
+            }
+        }
+        
+        // 確保語音載入完成 (某些瀏覽器非同步)
+        window.speechSynthesis.onvoiceschanged = loadVoices;
 
         function resetGame() {
             state.board = Array(6).fill(null).map(() => Array(8).fill(null));
@@ -365,7 +419,7 @@
             state.winner = null;
             closeGameModal();
             playSound('pop');
-            speak('遊戲重新開始');
+            speak('遊戲重新開始', true);
             initGame();
         }
 
@@ -413,11 +467,11 @@
             // 延遲播放開窗音效
             setTimeout(() => playSound('pop'), 50);
 
-            // 報讀邏輯：僅在非自訂模式下自動報讀
+            // 自動報讀邏輯 (isAuto = true)
             setTimeout(() => {
                 if (state.modal.isOpen) {
                     if (!isCustomMode()) {
-                        speak(text);
+                        speak(text, true);
                     }
                     // 自訂模式不自動報讀
                 }
@@ -429,9 +483,9 @@
             e.stopPropagation(); // 阻止冒泡
             const text = getBoardContent(r, c);
             
-            // 如果格子已經有棋子，或者是遊戲結束狀態 -> 僅報讀
+            // 如果格子已經有棋子，或者是遊戲結束狀態 -> 點擊視為「手動報讀」(isAuto = false)
             if (state.board[r][c] || state.winner) {
-                speak(text);
+                speak(text, false);
             } else {
                 // 如果格子是空的 -> 視為點擊格子，觸發遊戲流程
                 handleCellClick(r, c);
@@ -448,10 +502,10 @@
             if (checkWin(r, c, state.currentPlayer)) {
                 state.winner = state.currentPlayer;
                 playSound('win');
-                speak(`恭喜！${state.currentPlayer === 'orange' ? '橘子隊' : '檸檬隊'}獲勝！`);
+                speak(`恭喜！${state.currentPlayer === 'orange' ? '橘子隊' : '檸檬隊'}獲勝！`, true);
             } else {
                 state.currentPlayer = state.currentPlayer === 'orange' ? 'yellow' : 'orange';
-                speak(`輪到${state.currentPlayer === 'orange' ? '橘子' : '檸檬'}隊`);
+                speak(`輪到${state.currentPlayer === 'orange' ? '橘子' : '檸檬'}隊`, true);
             }
 
             closeGameModal();
@@ -575,7 +629,7 @@
 
                     content.innerHTML = `
                         <div class="space-y-4 animate-pop">
-                            <div class="text-center cursor-pointer" onclick="speak('如果是你，會有什麼感覺？點選一個最符合的心情')">
+                            <div class="text-center cursor-pointer" onclick="speak('如果是你，會有什麼感覺？點選一個最符合的心情', true)">
                                 <h4 class="text-lg font-bold text-gray-800 hover:text-indigo-600 transition-colors">如果是你，會有什麼感覺？</h4>
                                 <p class="text-xs text-gray-500">點選一個最符合的心情</p>
                             </div>
@@ -597,7 +651,7 @@
                             <span class="text-xs opacity-70">(點擊顯示建議)</span>
                         </button>
                     ` : `
-                        <div onclick="speak('轉念小幫手說：${suggestion}')" class="w-full h-full bg-green-50 p-4 rounded-xl border-2 border-green-200 flex flex-col items-center justify-center animate-pop cursor-pointer hover:bg-green-100 transition-colors">
+                        <div onclick="speak('轉念小幫手說：${suggestion}', false)" class="w-full h-full bg-green-50 p-4 rounded-xl border-2 border-green-200 flex flex-col items-center justify-center animate-pop cursor-pointer hover:bg-green-100 transition-colors">
                             <div class="flex items-center gap-2 text-green-700 font-bold mb-2">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path></svg>
                                 轉念小幫手說：
@@ -608,7 +662,7 @@
 
                     content.innerHTML = `
                         <div class="space-y-4 animate-pop">
-                            <div class="text-center cursor-pointer" onclick="speak('換你說說看！面對這種感覺，你可以怎麼安慰自己？請先試著說出來，再看小幫手的建議。')">
+                            <div class="text-center cursor-pointer" onclick="speak('換你說說看！面對這種感覺，你可以怎麼安慰自己？請先試著說出來，再看小幫手的建議。', true)">
                                 <h4 class="text-lg font-bold text-gray-800 hover:text-indigo-600 transition-colors">換你說說看！</h4>
                                 <p class="text-sm text-gray-500 mt-1 px-4 leading-relaxed">面對這種感覺，你可以怎麼安慰自己？<br/>請先試著說出來，再看小幫手的建議。</p>
                             </div>
@@ -629,14 +683,14 @@
         // 輔助函式：視窗操作
         function selectEmotion(label) {
             state.modal.selectedEmotion = label;
-            speak(label.replace('/', '或'));
+            speak(label.replace('/', '或'), true);
             renderModal();
         }
 
         function nextStep() {
             state.modal.step = 1;
             playSound('pop');
-            speak("換你說說看！面對這種感覺，你可以怎麼安慰自己？");
+            speak("換你說說看！面對這種感覺，你可以怎麼安慰自己？", true);
             renderModal();
         }
 
@@ -644,7 +698,7 @@
             state.modal.showReframingHint = true;
             playSound('pop');
             const suggestion = getReframingSuggestion(state.modal.cell.text);
-            speak("轉念小幫手建議：" + suggestion);
+            speak("轉念小幫手建議：" + suggestion, true);
             renderModal();
         }
 
@@ -656,10 +710,11 @@
         }
 
         function speakCurrentQuestion() {
+            // 手動點擊，isAuto = false
             if (isCustomMode()) {
-                speak("請回答：" + state.modal.cell.text);
+                speak("請回答：" + state.modal.cell.text, false);
             } else {
-                speak(state.modal.cell.text);
+                speak(state.modal.cell.text, false);
             }
         }
 
@@ -670,17 +725,27 @@
             playSynthSound(type);
         }
 
-        function speak(text) {
-            if (!state.settings.voiceEnabled) return;
+        function speak(text, isAuto = false) {
+            // 如果是自動報讀，且設定為關閉，則不發音
+            if (isAuto && !state.settings.voiceEnabled) return;
+
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = state.settings.rate;
-            utterance.lang = "zh-TW"; 
+            
+            // 套用選定的語音
+            if (state.settings.voiceURI) {
+                const voice = state.voices.find(v => v.voiceURI === state.settings.voiceURI);
+                if (voice) utterance.voice = voice;
+            } else {
+                utterance.lang = "zh-TW";
+            }
+            
             window.speechSynthesis.speak(utterance);
         }
 
         function speakWinner() {
-            speak(`恭喜！${state.winner === 'orange' ? '橘子隊' : '檸檬隊'}獲勝！`);
+            speak(`恭喜！${state.winner === 'orange' ? '橘子隊' : '檸檬隊'}獲勝！`, true);
         }
 
         // --- 8. 設定與編輯 ---
@@ -736,6 +801,16 @@
             renderBoard();
         }
 
+        function updateRate(val) {
+            state.settings.rate = parseFloat(val);
+            document.getElementById('rate-display').innerText = val + 'x';
+        }
+
+        function updateVoice(val) {
+            state.settings.voiceURI = val;
+            speak("測試語音風格", false);
+        }
+
         function showEditView() {
             document.getElementById('settings-main-view').classList.add('hidden');
             const editView = document.getElementById('settings-edit-view');
@@ -786,10 +861,10 @@
 
             if (normalizedDefault === normalizedNew) {
                 state.questions = [...DEFAULT_QUESTIONS];
-                speak("內容與預設相同，已切換回完整教育流程");
+                speak("內容與預設相同，已切換回完整教育流程", true);
             } else {
                 state.questions = newQuestions;
-                speak("自訂題目更新成功");
+                speak("自訂題目更新成功", true);
             }
 
             resetGame(); // 重置並套用
