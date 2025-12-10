@@ -47,15 +47,16 @@
 
             <!-- 隊伍狀態與設定 -->
             <div class="flex items-center gap-2 sm:gap-4">
+                <!-- 修正：加入 onclick 事件讓使用者可以手動切換隊伍 -->
                 <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-2xl">
                     <!-- 橘子隊 -->
-                    <div id="team-orange" class="flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-orange-400">
+                    <div id="team-orange" onclick="manualSetPlayer('orange')" class="flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-orange-400 cursor-pointer hover:bg-orange-50" title="點擊設定為先攻">
                         <div class="w-5 h-5 rounded-full bg-orange-500 border-2 border-white shadow-sm"></div>
                         <span class="font-bold text-gray-700 text-sm">橘子</span>
                     </div>
                     <div class="text-gray-300 font-bold text-xs">VS</div>
                     <!-- 檸檬隊 -->
-                    <div id="team-yellow" class="flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50">
+                    <div id="team-yellow" onclick="manualSetPlayer('yellow')" class="flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50 cursor-pointer hover:bg-yellow-50" title="點擊設定為先攻">
                         <div class="w-5 h-5 rounded-full bg-yellow-400 border-2 border-white shadow-sm"></div>
                         <span class="font-bold text-gray-700 text-sm">檸檬</span>
                     </div>
@@ -444,6 +445,14 @@
             initGame();
         }
 
+        function manualSetPlayer(team) {
+            if (state.winner) return; // 遊戲結束後不允許切換
+            state.currentPlayer = team;
+            updateUI();
+            playSound('pop');
+            speak(team === 'orange' ? '橘子隊先攻' : '檸檬隊先攻', true);
+        }
+
         function checkWin(r, c, player) {
             const directions = [
                 [[0, 1], [0, -1]], // 橫向
@@ -591,11 +600,11 @@
             const orangeTeam = document.getElementById('team-orange');
             const yellowTeam = document.getElementById('team-yellow');
             if (state.currentPlayer === 'orange') {
-                orangeTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-orange-400";
-                yellowTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50";
+                orangeTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-orange-400 cursor-pointer hover:bg-orange-50";
+                yellowTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50 cursor-pointer hover:bg-yellow-50";
             } else {
-                orangeTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50";
-                yellowTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-yellow-400";
+                orangeTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all opacity-50 cursor-pointer hover:bg-orange-50";
+                yellowTeam.className = "flex items-center gap-1 sm:gap-2 px-2 py-1 rounded-full transition-all bg-white shadow-md ring-2 ring-yellow-400 cursor-pointer hover:bg-yellow-50";
             }
 
             // 更新勝利者
